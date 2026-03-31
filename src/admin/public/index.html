@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oficina do TETEU — Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1419; color: #e7e9ea; }
+    header { padding: 1rem 1.5rem; border-bottom: 1px solid #2f3336; }
+    h1 { font-size: 1.25rem; margin: 0; }
+    main { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; padding: 1rem; max-width: 1200px; margin: 0 auto; }
+    .card { background: #16181c; border: 1px solid #2f3336; border-radius: 8px; padding: 1rem; }
+    ul { list-style: none; padding: 0; margin: 0; max-height: 70vh; overflow: auto; }
+    li { padding: 0.5rem 0; border-bottom: 1px solid #2f3336; cursor: pointer; }
+    li:hover { background: #1d2126; }
+    .stats { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .stat { min-width: 120px; }
+    .muted { color: #71767b; font-size: 0.85rem; }
+    pre { white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Oficina do TETEU — Painel</h1>
+    <p class="muted">Leituras: clientes, agendamentos do dia, mensagens, estatísticas</p>
+  </header>
+  <main>
+    <div class="card">
+      <h2>Clientes</h2>
+      <ul id="clientes"></ul>
+    </div>
+    <div>
+      <div class="card stats" id="stats"></div>
+      <div class="card" style="margin-top:1rem;">
+        <h2>Agendamentos hoje</h2>
+        <pre id="agenda"></pre>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h2>Mensagens (últimas 50)</h2>
+        <pre id="msgs">Selecione um cliente.</pre>
+      </div>
+    </div>
+  </main>
+  <script>
+    async function load() {
+      const [est, clientes] = await Promise.all([
+        fetch('/admin/api/estatisticas').then(r => r.json()),
+        fetch('/admin/api/clientes').then(r => r.json()),
+      ]);
+      document.getElementById('stats').innerHTML = [
+        '<div class="stat"><div class="muted">Clientes</div><strong>' + (est.total_clientes || 0) + '</strong></div>',
+        '<div class="stat"><div class="muted">Agend. ativos</div><strong>' + (est.agendamentos_ativos || 0) + '</strong></div>',
+        '<div class="stat"><div class="muted">Msgs 24h</div><strong>' + (est.mensagens_24h || 0) + '</strong></div>',
+      ].join('');
+      const ul = document.getElementById('clientes');
+      ul.innerHTML = clientes.map(c =>
+        '<li data-id="' + c.id + '">' + (c.nome || '-') + ' — ' + c.telefone + '</li>'
+      ).join('');
+      ul.querySelectorAll('li').forEach(li => {
+        li.addEventListener('click', async () => {
+          const id = li.getAttribute('data-id');
+          const msgs = await fetch('/admin/api/mensagens/' + id).then(r => r.json());
+          document.getElementById('msgs').textContent = JSON.stringify(msgs, null, 2);
+        });
+      });
+      const agenda = await fetch('/admin/api/agendamentos-hoje').then(r => r.json());
+      document.getElementById('agenda').textContent = JSON.stringify(agenda, null, 2);
+    }
+    load().catch(console.error);
+  </script>
+</body>
+</html>
