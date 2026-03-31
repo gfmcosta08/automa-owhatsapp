@@ -1,5 +1,5 @@
 # Blueprint Render — https://render.com/docs/blueprint-spec
-# Após o push para o GitHub: New > Blueprint > conecte farollapi-cloud/automa-owhatsapp
+# New > Blueprint > conecte farollapi-cloud/automa-owhatsapp
 
 databases:
   - name: oficina-db
@@ -7,9 +7,11 @@ databases:
     user: oficina
 
 services:
-  - type: redis
+  - type: keyvalue
     name: oficina-redis
-    ipAllowList: []
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: internal
 
   - type: web
     name: oficina-whatsapp
@@ -27,7 +29,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: oficina-redis
           property: connectionString
       - key: WHATSAPP_TOKEN
