@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
-import { API_BASE, fetcher } from '@/lib/api';
+import { API_BASE, fetcher, getAdminPanelUrl } from '@/lib/api';
 import type { EmpresaCadastro } from '@/lib/types';
 
 type EmpresaStatus = { has_empresa: boolean };
@@ -14,14 +14,6 @@ function formatCnpj(value: string): string {
   if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
   if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12, 14)}`;
-}
-
-function adminUrlFromApi(): string {
-  try {
-    return new URL(API_BASE).origin + '/admin/';
-  } catch {
-    return '/admin/';
-  }
 }
 
 export default function CadastroPage() {
@@ -96,7 +88,7 @@ export default function CadastroPage() {
             <h1 className="mb-2 text-2xl font-bold text-white">Instância registrada</h1>
             <p className="mb-6 text-zinc-400">
               <span className="font-semibold text-white">{empresa.nome}</span> — URL de webhook para o{' '}
-              <strong className="text-emerald-400">oazap.dev</strong>.
+              <strong className="text-emerald-400">UazAPI</strong>.
             </p>
 
             <div className="mb-6 rounded-xl border border-emerald-700/40 bg-emerald-950/50 p-4 text-left">
@@ -129,14 +121,14 @@ export default function CadastroPage() {
   }
 
   if (status?.has_empresa) {
-    const adminHref = adminUrlFromApi();
+    const adminHref = getAdminPanelUrl();
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12">
         <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
           <h1 className="mb-3 text-2xl font-bold text-white">Esta instância já está configurada</h1>
           <p className="mb-4 text-zinc-400">
             Este projeto roda em modo <strong className="text-zinc-200">um deploy = um cliente</strong>. Não é necessário
-            cadastrar outra empresa aqui. A URL do webhook (oazap.dev) fica no painel admin da API.
+            cadastrar outra empresa aqui. A URL do webhook (UazAPI) fica no painel admin da API.
           </p>
           <a
             href={adminHref}

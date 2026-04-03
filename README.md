@@ -1,28 +1,32 @@
 # WhatsApp Bot — oficina (single-tenant)
 
-Backend Node.js (Express) com PostgreSQL, Redis, webhook WhatsApp Cloud API, lembretes por cron e **painel de configuração** em `/admin` (empresa, credenciais Meta, URLs de webhook, horários e mensagens do bot).
+Backend Node.js (Express) com PostgreSQL, Redis, webhook **UazAPI** (recomendado), lembretes por cron, fluxo do **gerente** no WhatsApp (1/2/3 em pendentes) e **painel superadmin** em `/admin`.
 
 ## Modelo de deploy (single-tenant)
 
-Cada **deploy** deste repositório atende **um único cliente** (ex.: uma oficina). Não há multi-tenant no mesmo banco: o módulo de agendamento usa `empresa_id = 1` fixo ([`src/database/reposAgendamento.js`](src/database/reposAgendamento.js)). Outro negócio (ex.: imobiliária) deve ser outro projeto ou fork personalizado.
+Cada **deploy** deste repositório atende **um único cliente** (ex.: uma oficina). O módulo de agendamento usa `empresa_id = 1` fixo ([`src/database/reposAgendamento.js`](src/database/reposAgendamento.js)).
 
-- Webhook Meta: `/webhook/whatsapp`
-- Webhook oazap (por token na URL): `/webhook/entrada/:token` — URL completa exibida no admin após `WEBHOOK_BASE_URL` configurado
-- UI Next.js em `web/` (agendamento, etc.)
+- Webhook **UazAPI** (por token na URL): `POST /webhook/entrada/:token` — URL completa no admin após `WEBHOOK_BASE_URL`
+- Webhook **Meta** (legado): `GET/POST /webhook/whatsapp` — só se usar `WHATSAPP_PROVIDER=meta`
+- App **usuário** (Next.js) em `web/` — `/agendamento` (horários, serviços, sem tokens de API)
 
-## Painel admin (`/admin`)
+## Integração UazAPI
 
-- **Geral:** nome da empresa (menus e lembretes), e-mail, CNPJ.
-- **WhatsApp Meta:** Phone Number ID, Verify Token, Access Token e App Secret — persistidos no banco (token/secret cifrados com `SETTINGS_ENCRYPTION_KEY` em produção). Se o banco estiver vazio, usam-se as variáveis `WHATSAPP_*`.
-- **Webhooks:** copiar URL do Meta (`/webhook/whatsapp`) e do oazap (`/webhook/entrada/...`) — requer `WEBHOOK_BASE_URL`.
-- **Atendimento:** mensagem de boas-vindas, JSON de horários disponíveis, JID operador, número de contato.
+- Credenciais: **Base URL** (ex. `https://focus.uazapi.com`), **instance token** (e opcionalmente admin token). Envio: `POST {base}/send/text?token=...&admintoken=...` com corpo `{ "number", "text" }`. Documentação: [docs.uazapi.com](https://docs.uazapi.com).
+- **Telefone da instância** (E.164, só dígitos): usado para reconhecer o **mesmo número do bot** ao usar atalhos 1/2/3 como gerente.
+- **JID do gerente** em `agendamento_config`: número pessoal que também pode confirmar/cancelar/reagendar pendentes.
+
+## Painel superadmin (`/admin`)
+
+- **UazAPI:** base URL, tokens, telefone da instância.
+- **Webhook:** copiar URL `.../webhook/entrada/{token}` para o painel UazAPI.
+- **Meta:** seção colapsável (legado).
+- **Atendimento:** boas-vindas e JID do gerente; **horários** editados no app `/agendamento`.
 - **`ADMIN_PASSWORD`:** se definido, o painel exige login.
 
 ## Deploy no Render
 
-Passo a passo detalhado: [`deploy.md`](deploy.md).
-
-Repositório: [gfmcosta08/automa-owhatsapp](https://github.com/gfmcosta08/automa-owhatsapp).
+Passo a passo: [`deploy.md`](deploy.md).
 
 ## Local
 

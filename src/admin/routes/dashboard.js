@@ -164,14 +164,18 @@ router.get('/api/whatsapp-settings', async (req, res) => {
     const merged = await whatsappRuntime.loadMerged();
     res.json({
       ...masked,
+      effective_provider: merged.provider || 'auto',
       env_fallback: {
         token: !!config.whatsapp.token,
         phoneNumberId: !!config.whatsapp.phoneNumberId,
         verifyToken: !!config.whatsapp.verifyToken,
         appSecret: !!config.whatsapp.appSecret,
+        uazapiInstanceToken: !!(config.uazapi && config.uazapi.instanceToken),
+        uazapiBaseUrl: !!(config.uazapi && config.uazapi.baseUrl),
       },
       effective_preview: {
         phone_number_id: merged.phoneNumberId || '',
+        uazapi_base_url: merged.uazapiBaseUrl || '',
       },
     });
   } catch (e) {
@@ -195,6 +199,18 @@ router.put('/api/whatsapp-settings', express.json(), async (req, res) => {
     if (Object.prototype.hasOwnProperty.call(body, 'app_secret')) {
       patch.app_secret = body.app_secret;
     }
+    if (Object.prototype.hasOwnProperty.call(body, 'uazapi_base_url')) {
+      patch.uazapi_base_url = body.uazapi_base_url;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'uazapi_instance_token')) {
+      patch.uazapi_instance_token = body.uazapi_instance_token;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'uazapi_admin_token')) {
+      patch.uazapi_admin_token = body.uazapi_admin_token;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'uazapi_instance_phone')) {
+      patch.uazapi_instance_phone = body.uazapi_instance_phone;
+    }
     await reposWhatsapp.updatePartial(1, patch);
     whatsappRuntime.invalidateCache();
     const masked = await reposWhatsapp.getMaskedForAdmin(1);
@@ -207,10 +223,11 @@ router.put('/api/whatsapp-settings', express.json(), async (req, res) => {
 router.get('/api/public-urls', async (req, res) => {
   try {
     const emp = await reposEmpresa.findEmpresaById(1);
-    const oazap = emp && emp.webhook_token ? webhookUrl(emp.webhook_token) : '';
+    const uazapi = emp && emp.webhook_token ? webhookUrl(emp.webhook_token) : '';
     res.json({
+      uazapi_webhook_url: uazapi,
       meta_webhook_url: metaWebhookUrl(),
-      oazap_webhook_url: oazap,
+      oazap_webhook_url: uazapi,
       webhook_base_configured: !!(config.webhookBaseUrl && String(config.webhookBaseUrl).trim()),
     });
   } catch (e) {

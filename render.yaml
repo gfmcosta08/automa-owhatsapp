@@ -32,6 +32,16 @@ services:
           type: keyvalue
           name: oficina-redis
           property: connectionString
+      - key: WHATSAPP_PROVIDER
+        value: auto
+      - key: UAZAPI_BASE_URL
+        sync: false
+      - key: UAZAPI_INSTANCE_TOKEN
+        sync: false
+      - key: UAZAPI_ADMIN_TOKEN
+        sync: false
+      - key: UAZAPI_INSTANCE_PHONE
+        sync: false
       - key: WHATSAPP_TOKEN
         sync: false
       - key: WHATSAPP_PHONE_NUMBER_ID

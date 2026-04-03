@@ -75,7 +75,7 @@
   <div id="main-app">
     <header>
       <h1 id="header-title">Painel</h1>
-      <p class="muted" id="header-sub">Clientes, agendamentos, mensagens e configuração desta instância</p>
+      <p class="muted" id="header-sub">Clientes, agendamentos, mensagens e configuração desta instância.</p>
       <button type="button" class="btn-secondary" onclick="doLogout()" style="margin-top:0.5rem;">Sair</button>
     </header>
     <main>
@@ -98,58 +98,68 @@
         </div>
 
         <div class="card full-width">
-          <h2>WhatsApp Cloud API (Meta)</h2>
-          <p class="muted">Grava no banco (cifrado: token e app secret). Se vazio aqui, usa variáveis de ambiente. Deixe em branco os campos que não quiser alterar.</p>
+          <h2>UazAPI — envio e instância</h2>
+          <p class="muted">Envio: <code>POST {base}/send/text?token=...</code> (documentação <a href="https://docs.uazapi.com" target="_blank" rel="noopener">docs.uazapi.com</a>). Base URL costuma ser <code>https://seudominio.uazapi.com</code> (ex.: <code>https://focus.uazapi.com</code>). Tokens gravados cifrados.</p>
           <div class="form-row">
-            <div class="form-group" style="flex:2;min-width:220px;"><label>Phone Number ID</label><input type="text" id="cfg-wa-phone-id" placeholder="ID do número na Meta" /></div>
-            <div class="form-group" style="flex:2;"><label>Verify Token (webhook Meta)</label><input type="text" id="cfg-wa-verify" autocomplete="off" /></div>
+            <div class="form-group" style="flex:2;min-width:220px;"><label>Base URL UazAPI</label><input type="text" id="cfg-uaz-base" placeholder="https://focus.uazapi.com" autocomplete="off" /></div>
+            <div class="form-group" style="flex:2;"><label>Telefone da instância (E.164, só dígitos)</label><input type="text" id="cfg-uaz-phone" placeholder="5563999990000 — mesmo número do bot (atalhos 1/2/3)" autocomplete="off" /></div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="flex:2;"><label>Access Token</label><input type="password" id="cfg-wa-token" placeholder="Novo token (omitir para manter)" autocomplete="new-password" /></div>
-            <div class="form-group" style="flex:2;"><label>App Secret (assinatura X-Hub)</label><input type="password" id="cfg-wa-secret" placeholder="Novo secret (omitir para manter)" autocomplete="new-password" /></div>
-            <button type="button" class="btn-primary" onclick="saveWhatsapp()">Salvar WhatsApp</button>
+            <div class="form-group" style="flex:2;"><label>Instance token</label><input type="password" id="cfg-uaz-inst" placeholder="Novo token (omitir para manter)" autocomplete="new-password" /></div>
+            <div class="form-group" style="flex:2;"><label>Admin token (opcional)</label><input type="password" id="cfg-uaz-admin" placeholder="Alguns painéis exigem admintoken na query" autocomplete="new-password" /></div>
+            <button type="button" class="btn-primary" onclick="saveWhatsapp()">Salvar UazAPI</button>
           </div>
+          <p id="cfg-uaz-hint" class="muted"></p>
+          <p class="muted" style="margin-top:0.75rem;">Provedor efetivo: <code id="cfg-provider-label">—</code> · <code>WHATSAPP_PROVIDER</code>=auto|uazapi|meta no ambiente.</p>
+          <details style="margin-top:1rem;">
+            <summary class="muted" style="cursor:pointer;">Legado — Meta Cloud API (webhook /whatsapp)</summary>
+            <p class="muted" style="margin-top:0.5rem;">Só se usar <code>WHATSAPP_PROVIDER=meta</code> com token Graph.</p>
+            <div class="form-row">
+              <div class="form-group" style="flex:2;min-width:220px;"><label>Phone Number ID</label><input type="text" id="cfg-wa-phone-id" placeholder="ID do número na Meta" /></div>
+              <div class="form-group" style="flex:2;"><label>Verify Token</label><input type="text" id="cfg-wa-verify" autocomplete="off" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:2;"><label>Access Token</label><input type="password" id="cfg-wa-token" placeholder="Novo token (omitir para manter)" autocomplete="new-password" /></div>
+              <div class="form-group" style="flex:2;"><label>App Secret</label><input type="password" id="cfg-wa-secret" placeholder="Novo secret (omitir para manter)" autocomplete="new-password" /></div>
+            </div>
+          </details>
           <p id="cfg-wa-hint" class="muted"></p>
           <p id="cfg-wa-msg" class="cfg-msg"></p>
         </div>
 
         <div class="card full-width">
-          <h2>URLs de webhook</h2>
-          <p class="muted">Configure <code>WEBHOOK_BASE_URL</code> no ambiente com a URL pública desta API (sem barra no final).</p>
+          <h2>URL do webhook (UazAPI)</h2>
+          <p class="muted">Uma URL por deploy. Cadastre na UazAPI apontando para <code>POST</code> esta rota. Configure <code>WEBHOOK_BASE_URL</code> (sem barra no final).</p>
           <p id="cfg-url-warn" class="msg-err"></p>
           <div class="form-row" style="align-items:center;">
-            <span class="muted" style="min-width:120px;">Meta</span>
-            <input class="webhook-input" type="text" readonly id="url-meta" />
-            <button type="button" class="btn-copy" onclick="copiarBtn(this, document.getElementById('url-meta').value)">Copiar</button>
+            <span class="muted" style="min-width:120px;">UazAPI</span>
+            <input class="webhook-input" type="text" readonly id="url-uazapi" />
+            <button type="button" class="btn-copy" onclick="copiarBtn(this, document.getElementById('url-uazapi').value)">Copiar</button>
           </div>
           <div class="form-row" style="align-items:center;margin-top:0.75rem;">
-            <span class="muted" style="min-width:120px;">oazap.dev</span>
-            <input class="webhook-input" type="text" readonly id="url-oazap" />
-            <button type="button" class="btn-copy" onclick="copiarBtn(this, document.getElementById('url-oazap').value)">Copiar</button>
+            <span class="muted" style="min-width:120px;">Meta (legado)</span>
+            <input class="webhook-input" type="text" readonly id="url-meta" />
+            <button type="button" class="btn-copy" onclick="copiarBtn(this, document.getElementById('url-meta').value)">Copiar</button>
           </div>
         </div>
 
         <div class="card full-width">
-          <h2>Atendimento — horários e mensagens</h2>
-          <p class="muted">Mensagem de boas-vindas substitui o texto padrão. Horários: JSON array de objetos <code>{ "label", "daysFromNow", "hour", "minute" }</code> ou array de strings (labels).</p>
+          <h2>Atendimento — texto e gerente (WhatsApp)</h2>
+          <p class="muted"><strong>Horários disponíveis</strong> são editados no app do usuário (rota <code>/agendamento</code> no front Next), com dias da semana e faixas — não use JSON aqui.</p>
           <div class="form-group">
             <label>Mensagem de boas-vindas (opcional)</label>
             <textarea id="cfg-boasvindas" placeholder="Ex.: Olá! Bem-vindo à nossa oficina. Qual é seu nome?"></textarea>
           </div>
-          <div class="form-group" style="margin-top:0.75rem;">
-            <label>Horários disponíveis (JSON)</label>
-            <textarea id="cfg-horarios" spellcheck="false"></textarea>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>JID operador (opcional)</label><input type="text" id="cfg-jid" /></div>
+          <div class="form-row" style="margin-top:0.75rem;">
+            <div class="form-group" style="flex:2;"><label>JID do gerente (controla pendentes: 1 confirmar, 2 cancelar, 3 reagendar)</label><input type="text" id="cfg-jid" placeholder="5563999990000@s.whatsapp.net" /></div>
             <div class="form-group"><label>Número exibido / contato (opcional)</label><input type="text" id="cfg-numero" placeholder="5511999990000" /></div>
-            <button type="button" class="btn-primary" onclick="saveAgendamentoConfig()">Salvar atendimento</button>
+            <button type="button" class="btn-primary" onclick="saveAgendamentoConfig()">Salvar</button>
           </div>
           <p id="cfg-ag-msg" class="cfg-msg"></p>
         </div>
 
         <div class="card full-width">
-          <h2>Esta instância — Webhook oazap (tabela)</h2>
+          <h2>Esta instância — token na URL (tabela)</h2>
           <p class="muted">Um deploy = um cliente. Cadastro extra só se não houver empresa no banco.</p>
           <div id="empresa-form-wrap" class="form-row" style="display:none;">
             <div class="form-group"><label>Nome *</label><input type="text" id="emp-nome" /></div>
@@ -162,7 +172,7 @@
             <thead>
               <tr>
                 <th>#</th><th>Nome</th><th>E-mail</th><th>CNPJ</th><th>Status</th>
-                <th>URL Webhook oazap</th><th>Cadastro</th>
+                <th>URL webhook</th><th>Cadastro</th>
               </tr>
             </thead>
             <tbody id="empresa-tbody">
@@ -195,12 +205,6 @@
   </div>
 
   <script>
-    const HORARIOS_EXEMPLO = JSON.stringify([
-      { "label": "Segunda 08:00", "daysFromNow": 7, "hour": 8, "minute": 0 },
-      { "label": "Segunda 14:00", "daysFromNow": 8, "hour": 14, "minute": 0 },
-      { "label": "Terça 09:00", "daysFromNow": 9, "hour": 9, "minute": 0 }
-    ], null, 2);
-
     async function api(path, opts) {
       const o = opts || {};
       const r = await fetch('/admin' + path, Object.assign({ credentials: 'include' }, o, {
@@ -350,25 +354,40 @@
 
     async function loadWhatsappForm() {
       const r = await api('/api/whatsapp-settings').then((x) => x.json());
+      document.getElementById('cfg-uaz-base').value = r.uazapi_base_url || r.effective_preview?.uazapi_base_url || '';
+      document.getElementById('cfg-uaz-phone').value = r.uazapi_instance_phone || '';
+      document.getElementById('cfg-uaz-inst').value = '';
+      document.getElementById('cfg-uaz-admin').value = '';
       document.getElementById('cfg-wa-phone-id').value = r.phone_number_id || r.effective_preview?.phone_number_id || '';
       document.getElementById('cfg-wa-verify').value = '';
       document.getElementById('cfg-wa-token').value = '';
       document.getElementById('cfg-wa-secret').value = '';
+      document.getElementById('cfg-provider-label').textContent = r.effective_provider || 'auto';
+      const uhint = [];
+      if (r.uazapi_instance_token_set) uhint.push('Instance token: ' + (r.uazapi_instance_token_masked || '****'));
+      if (r.uazapi_admin_token_set) uhint.push('Admin token salvo');
+      if (r.env_fallback?.uazapiInstanceToken) uhint.push('Env: UAZAPI_INSTANCE_TOKEN');
+      document.getElementById('cfg-uaz-hint').textContent = uhint.join(' · ') || 'Sem token de instância no banco — use env ou salve acima.';
       const hint = [];
-      if (r.access_token_set) hint.push('Access token: ' + (r.access_token_masked || '****'));
-      if (r.verify_token_masked) hint.push('Verify token salvo: ' + r.verify_token_masked);
-      if (r.app_secret_set) hint.push('App secret salvo (mascarado)');
-      if (r.env_fallback?.token) hint.push('Fallback env: token');
-      if (r.env_fallback?.phoneNumberId) hint.push('Fallback env: phone id');
-      document.getElementById('cfg-wa-hint').textContent = hint.join(' · ') || 'Nenhum segredo no banco ainda — usando só env se configurado.';
+      if (r.access_token_set) hint.push('Meta access token: ' + (r.access_token_masked || '****'));
+      if (r.verify_token_masked) hint.push('Verify: ' + r.verify_token_masked);
+      if (r.app_secret_set) hint.push('App secret (Meta)');
+      if (r.env_fallback?.token) hint.push('Env Meta token');
+      document.getElementById('cfg-wa-hint').textContent = hint.join(' · ') || '';
     }
 
     async function saveWhatsapp() {
       const msg = document.getElementById('cfg-wa-msg');
       msg.textContent = '';
       const body = {
+        uazapi_base_url: document.getElementById('cfg-uaz-base').value.trim() || null,
+        uazapi_instance_phone: document.getElementById('cfg-uaz-phone').value.trim() || null,
         phone_number_id: document.getElementById('cfg-wa-phone-id').value.trim() || null,
       };
+      const ui = document.getElementById('cfg-uaz-inst').value;
+      if (ui !== '') body.uazapi_instance_token = ui;
+      const ua = document.getElementById('cfg-uaz-admin').value;
+      if (ua !== '') body.uazapi_admin_token = ua;
       const v = document.getElementById('cfg-wa-verify').value;
       if (v !== '') body.verify_token = v;
       const t = document.getElementById('cfg-wa-token').value;
@@ -380,7 +399,7 @@
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Erro');
         msg.className = 'cfg-msg msg-ok';
-        msg.textContent = 'Configuração WhatsApp salva.';
+        msg.textContent = 'Configuração salva.';
         await loadWhatsappForm();
       } catch (e) {
         msg.className = 'cfg-msg msg-err';
@@ -390,11 +409,11 @@
 
     async function loadPublicUrls() {
       const u = await api('/api/public-urls').then((r) => r.json());
+      document.getElementById('url-uazapi').value = u.uazapi_webhook_url || u.oazap_webhook_url || '';
       document.getElementById('url-meta').value = u.meta_webhook_url || '';
-      document.getElementById('url-oazap').value = u.oazap_webhook_url || '';
       const w = document.getElementById('cfg-url-warn');
       if (!u.webhook_base_configured) {
-        w.textContent = 'Defina WEBHOOK_BASE_URL para exibir a URL completa do webhook Meta.';
+        w.textContent = 'Defina WEBHOOK_BASE_URL para exibir a URL completa do webhook.';
       } else {
         w.textContent = '';
       }
@@ -402,12 +421,8 @@
 
     async function loadAgendamentoForm() {
       const row = await api('/api/config-agendamento').then((r) => r.json());
-      if (!row) {
-        document.getElementById('cfg-horarios').value = HORARIOS_EXEMPLO;
-        return;
-      }
+      if (!row) return;
       document.getElementById('cfg-boasvindas').value = row.mensagem_boas_vindas || '';
-      document.getElementById('cfg-horarios').value = JSON.stringify(row.horarios_disponiveis || [], null, 2);
       document.getElementById('cfg-jid').value = row.jid_operador || '';
       document.getElementById('cfg-numero').value = row.phone_number_numero || '';
     }
@@ -415,15 +430,11 @@
     async function saveAgendamentoConfig() {
       const msg = document.getElementById('cfg-ag-msg');
       msg.textContent = '';
-      let horarios;
+      let horarios = [];
       try {
-        horarios = JSON.parse(document.getElementById('cfg-horarios').value || '[]');
-        if (!Array.isArray(horarios)) throw new Error('horarios_disponiveis deve ser um array JSON');
-      } catch (e) {
-        msg.className = 'cfg-msg msg-err';
-        msg.textContent = 'JSON de horários inválido: ' + e.message;
-        return;
-      }
+        const cur = await api('/api/config-agendamento').then((x) => x.json());
+        if (cur && Array.isArray(cur.horarios_disponiveis)) horarios = cur.horarios_disponiveis;
+      } catch (_) { /* ignore */ }
       try {
         const r = await api('/api/config-agendamento', {
           method: 'PUT',

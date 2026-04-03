@@ -168,6 +168,34 @@ async function updateAgendamentoCancelar(agendamentoId, status_anterior, motivo)
   );
 }
 
+async function updateAgendamentoCancelarOperador(agendamentoId, status_anterior, motivo) {
+  await query(
+    `UPDATE agendamentos SET status = 'cancelado', status_anterior = $2, cancelado_em = NOW(),
+     motivo_cancelamento = $3, cancelado_por = 'operador', updated_at = NOW() WHERE id = $1`,
+    [agendamentoId, status_anterior, motivo || 'Cancelado pelo gerente']
+  );
+}
+
+async function updateAgendamentoConfirmar(agendamentoId) {
+  await query(
+    `UPDATE agendamentos SET status = 'confirmado', confirmado_em = NOW(), confirmado_por = 'operador', updated_at = NOW()
+     WHERE id = $1 AND status = 'pendente'`,
+    [agendamentoId]
+  );
+}
+
+async function findOldestAgendamentoPendente() {
+  const r = await query(
+    `SELECT a.*, c.telefone, c.nome
+     FROM agendamentos a
+     JOIN clientes c ON c.id = a.cliente_id
+     WHERE a.status = 'pendente'
+     ORDER BY a.created_at ASC NULLS LAST, a.horario ASC
+     LIMIT 1`
+  );
+  return r.rows[0] || null;
+}
+
 async function updateAgendamentoReagendado(origemId, novoId, statusAnt) {
   await query(
     `UPDATE agendamentos SET status = 'reagendado', status_anterior = $2, reagendado_para_id = $3, updated_at = NOW() WHERE id = $1`,
@@ -310,6 +338,9 @@ module.exports = {
   findAgendamentoById,
   findAgendamentoAtivoPorCliente,
   updateAgendamentoCancelar,
+  updateAgendamentoCancelarOperador,
+  updateAgendamentoConfirmar,
+  findOldestAgendamentoPendente,
   updateAgendamentoReagendado,
   insertLembretesParaAgendamento,
   cancelarLembretesPendentes,

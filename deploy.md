@@ -8,11 +8,13 @@ Repositório no GitHub: **[gfmcosta08/automa-owhatsapp](https://github.com/gfmco
    - `SETTINGS_ENCRYPTION_KEY` — 64 caracteres hex (32 bytes) ou base64 de 32 bytes, para cifrar token/app secret salvos pelo painel.
    - `ADMIN_PASSWORD` — senha do painel `/admin` (recomendado em produção).
    - `INTERNAL_NOTIFY_SECRET` — já gerado no blueprint; serve também como `ADMIN_SESSION_SECRET` se não definido.
-3. **WhatsApp:** pode usar só o painel admin após o primeiro deploy **ou** preencher no Render (útil no primeiro boot):
-   - `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` (opcional)
-4. URL do webhook no Meta: `https://<seu-serviço>.onrender.com/webhook/whatsapp`
+3. **WhatsApp / UazAPI:** configure no painel `/admin` (recomendado) **ou** variáveis de ambiente:
+   - `UAZAPI_BASE_URL`, `UAZAPI_INSTANCE_TOKEN`, opcional `UAZAPI_ADMIN_TOKEN`, `UAZAPI_INSTANCE_PHONE` (mesmo número do bot para atalhos de gerente)
+   - `WHATSAPP_PROVIDER` = `auto` (padrão), `uazapi` ou `meta`
+   - Legado Meta: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`
+4. URL do webhook na UazAPI: `https://<seu-serviço>.onrender.com/webhook/entrada/<token>` (token exibido no admin). Meta (legado): `.../webhook/whatsapp`
 5. Painel admin: `https://<seu-serviço>.onrender.com/admin/`
 
-O serviço escuta em `0.0.0.0:$PORT` conforme [Port binding](https://render.com/docs/web-services#port-binding). Rode `npm run migrate` no build para aplicar a migração `004_whatsapp_integracao.sql` (já incluída no `npm run build` do projeto).
+O serviço escuta em `0.0.0.0:$PORT` conforme [Port binding](https://render.com/docs/web-services#port-binding). Rode `npm run migrate` no build para aplicar migrações em `src/database/migrations/`.
 
 Para modelo single-tenant e variáveis extras (`WEBHOOK_BASE_URL`, `CORS_ORIGIN`, etc.), veja o [README](README.md).

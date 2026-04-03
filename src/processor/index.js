@@ -6,6 +6,7 @@ const reposAgendamento = require('../database/reposAgendamento');
 const { ESTADO } = require('./states');
 const T = require('../whatsapp/templates');
 const { parseHorariosConfig, slotFromChoice, slotsHorarioText } = require('./horariosHelper');
+const { notifyGerenteNovoPendente } = require('./operadorFlow');
 
 function getDados(sessao) {
   const d = sessao.dados_temporarios;
@@ -161,6 +162,10 @@ async function processarMensagem({ cliente, sessao, texto }) {
         agendamento_id: ag.id,
         horario,
       });
+      const clienteRow = await repos.findClienteById(clienteId);
+      if (clienteRow) {
+        await notifyGerenteNovoPendente(ag, clienteRow);
+      }
       novoEstado = ESTADO.POS_ACAO;
       novosDados = {};
       gravarHistorico(estado, novoEstado, msg, { agendamento_id: ag.id });

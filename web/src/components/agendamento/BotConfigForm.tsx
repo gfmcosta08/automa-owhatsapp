@@ -136,7 +136,11 @@ export function BotConfigForm() {
           onChange={(e) => setPhone(formatPhoneMask(e.target.value))}
         />
       </div>
-      <p className="mb-4 text-xs text-zinc-500">WhatsApp de quem vai gerenciar os agendamentos</p>
+      <p className="mb-4 text-xs text-zinc-500">
+        WhatsApp do gerente: recebe aviso de pendente e pode responder <strong className="text-zinc-400">1</strong>{' '}
+        confirmar, <strong className="text-zinc-400">2</strong> cancelar ou <strong className="text-zinc-400">3</strong>{' '}
+        pedir reagendamento ao cliente. O telefone da instância do bot pode ser configurado no painel administrativo.
+      </p>
 
       <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
         Texto de apresentação

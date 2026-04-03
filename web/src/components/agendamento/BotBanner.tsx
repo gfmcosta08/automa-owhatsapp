@@ -31,7 +31,7 @@ export function BotBanner({ config, loading }: Props) {
   return (
     <div className="mb-6 w-full rounded-2xl border border-amber-700/40 bg-amber-950/60 px-4 py-3 text-amber-100 backdrop-blur-sm">
       <p className="font-semibold">🟡 Bot não configurado</p>
-      <p className="mt-1 text-sm text-amber-200/90">Salve a configuração abaixo para o bot começar a responder</p>
+      <p className="mt-1 text-sm text-amber-200/90">Acesse Configurações para ativar o bot</p>
     </div>
   );
 }
