@@ -2,8 +2,9 @@
 
 const express = require('express');
 const crypto = require('crypto');
-const config = require('../config');
+const whatsappRuntime = require('../config/whatsappRuntime');
 const repos = require('../database/repos');
+const reposEmpresa = require('../database/reposEmpresa');
 const { processarMensagem } = require('../processor');
 const { ESTADO } = require('../processor/states');
 const { sendText } = require('../whatsapp/client');
@@ -17,8 +18,8 @@ function normalizeTelefone(from) {
   return String(from || '').replace(/\D/g, '');
 }
 
-function verifyMetaSignature(req) {
-  const secret = config.whatsapp.appSecret;
+async function verifyMetaSignature(req) {
+  const secret = await whatsappRuntime.getAppSecret();
   if (!secret) return true;
   const sig = req.get('x-hub-signature-256');
   if (!sig || !sig.startsWith('sha256=')) return false;
@@ -32,11 +33,11 @@ function verifyMetaSignature(req) {
   }
 }
 
-router.get('/whatsapp', (req, res) => {
+router.get('/whatsapp', async (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
-  const verify = config.whatsapp.verifyToken;
+  const verify = await whatsappRuntime.getVerifyToken();
   if (mode === 'subscribe' && verify && token === verify) {
     return res.status(200).send(challenge);
   }
@@ -45,7 +46,7 @@ router.get('/whatsapp', (req, res) => {
 
 router.post('/whatsapp', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), async (req, res) => {
   res.sendStatus(200);
-  if (!verifyMetaSignature(req)) {
+  if (!(await verifyMetaSignature(req))) {
     logger.warn('webhook', 'assinatura inválida ou ausente');
     return;
   }
@@ -144,5 +145,67 @@ async function handleIncoming({ telefone, texto, whatsapp_message_id, whatsapp_t
     ms: Date.now() - t0,
   });
 }
+
+/**
+ * POST /webhook/entrada/:token
+ *
+ * Endpoint para recebimento de eventos do oazap.dev por empresa.
+ * Cada empresa recebe um token único; o oazap.dev envia mensagens WhatsApp
+ * para esta URL. O sistema responde 200 imediatamente e processa de forma
+ * assíncrona para não causar timeout no oazap.dev.
+ *
+ * Payload esperado do oazap.dev (adapte conforme documentação da plataforma):
+ * {
+ *   from: "5511999990000",        // telefone do remetente
+ *   text: "mensagem do cliente",
+ *   messageId: "abc123",
+ *   timestamp: "1700000000",
+ *   profileName: "João"
+ * }
+ */
+router.post('/entrada/:token', express.json(), async (req, res) => {
+  res.sendStatus(200);
+
+  const { token } = req.params;
+
+  try {
+    const empresa = await reposEmpresa.findEmpresaByToken(token);
+    if (!empresa) {
+      logger.warn('webhook-entrada', 'token inválido ou empresa não encontrada', { token });
+      return;
+    }
+    if (empresa.status !== 'ativo') {
+      logger.warn('webhook-entrada', 'empresa inativa', { empresa_id: empresa.id });
+      return;
+    }
+
+    const body = req.body || {};
+
+    // Normaliza payload do oazap.dev para o formato interno
+    const telefone = normalizeTelefone(body.from || body.telefone || body.phone || '');
+    const texto = String(body.text || body.message || body.body || '').trim();
+    const messageId = body.messageId || body.message_id || null;
+    const tsRaw = body.timestamp || body.ts || null;
+    const parsedTs = tsRaw != null && tsRaw !== '' ? parseWhatsAppTs(tsRaw) : null;
+    const whatsapp_timestamp =
+      parsedTs instanceof Date && !Number.isNaN(parsedTs.getTime()) ? parsedTs : new Date();
+    const whatsapp_name = body.profileName || body.profile_name || body.name || null;
+
+    if (!telefone) {
+      logger.warn('webhook-entrada', 'payload sem telefone', { empresa_id: empresa.id, body });
+      return;
+    }
+
+    await handleIncoming({
+      telefone,
+      texto,
+      whatsapp_message_id: messageId,
+      whatsapp_timestamp,
+      whatsapp_name,
+    });
+  } catch (e) {
+    logger.error('webhook-entrada', e.message, { token, stack: e.stack });
+  }
+});
 
 module.exports = { router, handleIncoming };

@@ -1,17 +1,17 @@
 'use strict';
 
-const config = require('../config');
+const whatsappRuntime = require('../config/whatsappRuntime');
 
-function buildUrl() {
-  const id = config.whatsapp.phoneNumberId;
-  if (!id) throw new Error('WHATSAPP_PHONE_NUMBER_ID não configurado');
-  return `https://graph.facebook.com/v21.0/${id}/messages`;
+async function buildUrl() {
+  const { phoneNumberId } = await whatsappRuntime.getSendCredentials();
+  if (!phoneNumberId) throw new Error('Phone Number ID não configurado (admin ou WHATSAPP_PHONE_NUMBER_ID)');
+  return `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
 }
 
 async function sendText(to, text) {
-  const token = config.whatsapp.token;
+  const { token } = await whatsappRuntime.getSendCredentials();
   if (!token) {
-    console.warn('[whatsapp] WHATSAPP_TOKEN ausente — mensagem não enviada (dev)');
+    console.warn('[whatsapp] Token ausente — mensagem não enviada (configure no admin ou WHATSAPP_TOKEN)');
     return { ok: false, skipped: true };
   }
   const body = {
@@ -20,7 +20,7 @@ async function sendText(to, text) {
     type: 'text',
     text: { body: text },
   };
-  const res = await fetch(buildUrl(), {
+  const res = await fetch(await buildUrl(), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -36,4 +36,4 @@ async function sendText(to, text) {
   return { ok: true, data: json };
 }
 
-module.exports = { sendText };
+module.exports = { sendText, buildUrl };

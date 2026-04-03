@@ -1,5 +1,5 @@
 # Blueprint Render — https://render.com/docs/blueprint-spec
-# New > Blueprint > conecte farollapi-cloud/automa-owhatsapp
+# New > Blueprint > conecte gfmcosta08/automa-owhatsapp
 
 databases:
   - name: oficina-db

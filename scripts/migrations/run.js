@@ -17,11 +17,17 @@ async function run() {
     process.env.PGSSLMODE === 'require';
   const client = new Client({ connectionString: url, ssl: needsSsl ? { rejectUnauthorized: false } : false });
   await client.connect();
-  const sqlPath = path.join(__dirname, '..', '..', 'src', 'database', 'migrations', '001_initial.sql');
-  const sql = fs.readFileSync(sqlPath, 'utf8');
-  await client.query(sql);
+  const migDir = path.join(__dirname, '..', '..', 'src', 'database', 'migrations');
+  const files = fs
+    .readdirSync(migDir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
+  for (const f of files) {
+    const sql = fs.readFileSync(path.join(migDir, f), 'utf8');
+    await client.query(sql);
+    console.log('Migração aplicada:', f);
+  }
   await client.end();
-  console.log('Migração 001_initial.sql aplicada.');
 }
 
 run().catch((e) => {

@@ -14,4 +14,7 @@ module.exports = {
     appSecret: process.env.WHATSAPP_APP_SECRET,
   },
   internalNotifySecret: process.env.INTERNAL_NOTIFY_SECRET,
+  webhookBaseUrl: process.env.WEBHOOK_BASE_URL || '',
+  adminPassword: process.env.ADMIN_PASSWORD || '',
+  adminSessionSecret: process.env.ADMIN_SESSION_SECRET || process.env.INTERNAL_NOTIFY_SECRET || '',
 };
