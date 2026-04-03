@@ -24,6 +24,10 @@ Cada **deploy** deste repositório atende **um único cliente** (ex.: uma oficin
 - **Atendimento:** boas-vindas e JID do gerente; **horários** editados no app `/agendamento`.
 - **`ADMIN_PASSWORD`:** se definido, o painel exige login.
 
+## Espelhamento GitHub (farollapi-cloud → gfmcosta08)
+
+Instruções e workflow para colar na interface do GitHub: [`docs/ESPELHAMENTO.md`](docs/ESPELHAMENTO.md).
+
 ## Deploy no Render
 
 Passo a passo: [`deploy.md`](deploy.md).
